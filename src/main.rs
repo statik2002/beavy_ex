@@ -57,13 +57,14 @@ async fn main() {
             break;
         }
 
-        
+        /* 
         set_camera(&Camera3D{
             position: vec3(0., 0., 40.),
             up: vec3(1., 0., 0.),
             target: vec3(0., 0., 0.),
             ..Default::default()
         });
+        */
 
         //draw_grid(20, 1., BLACK, GRAY);
         /* 
@@ -103,10 +104,10 @@ async fn main() {
         for j in 0..BLOCKS_H{
             for i in 0..BLOCKS_W {
                 if blocks[j][i] {
-                    let block_width = 20.0 / BLOCKS_W as f32;
-                    let block_height = 10. / BLOCKS_H as f32;
-                    let block_x = j as f32 * block_height + 1.5;
-                    let block_y = i as f32 * block_width - 9.0;
+                    let block_width = screen_width() / BLOCKS_W as f32 / 2. - 2.;
+                    let block_height = screen_height() / BLOCKS_H as f32 / 2. - 2.;
+                    let block_x = j as f32 * block_width + 10.;
+                    let block_y = i as f32 * block_height + 10.0;
                     draw_cube_wires(vec3(block_x, block_y, 0.), vec3(block_height, block_width, 0.5), WHITE);
 
                     if ball_y >= block_x - block_height / 2. && ball_y <= block_x + block_height / 2.  && ball_x >= block_y - block_width / 2. && ball_x <= block_y + block_width / 2. {
@@ -119,9 +120,9 @@ async fn main() {
         //draw_cube_wires(vec3(10., 0., -10.), vec3(1., 1., 1.), WHITE);
 
         // draw walls
-        draw_cube_wires(vec3(0., -10.5, 0.), vec3(21., 1., 0.5), WHITE);
-        draw_cube_wires(vec3(0., 10.5, 0.), vec3(21., 1., 0.5), WHITE);
-        draw_cube_wires(vec3(11., 0., 0.), vec3(1., 22., 0.5), WHITE);
+        draw_cube_wires(vec3(6., screen_height() / 2., 0.), vec3(10., screen_height(), 0.5), WHITE); // left wall
+        draw_cube_wires(vec3(screen_width() - 10., screen_height() / 2. + 1., 0.), vec3(10., screen_height(), 0.5) - 2., WHITE); // right wal
+        draw_cube_wires(vec3(screen_width() / 2., 6., 0.), vec3(screen_width() - 1., 5., 0.5), WHITE); // top wall
 
         if ball_x <= -10. || ball_x > 10. {
             dx *= -1.;
@@ -163,6 +164,7 @@ async fn main() {
             draw_text("X", 10.0,120.0, 20.0, RED);
             draw_text("Y", 25.0,120.0, 20.0, BLUE);
             draw_text("Z", 40.0,120.0, 20.0, GREEN);
+            draw_text(&format!("Screen width: {}, Screen height: {}", screen_width(), screen_height()), 10.0,150.0, 20.0, GREEN);
         }
 
         
