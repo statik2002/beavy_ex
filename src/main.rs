@@ -36,9 +36,11 @@ async fn main() {
     let mut ball_x = screen_width() / 2.;
     let mut ball_y = screen_height() / 2.;
     let mut ball_radius: f32 = 15.;
-    let mut dx = 50.0;
-    let mut dy = 50.0;
+    let mut dx = 200.0;
+    let mut dy = 200.0;
     let mut stick = false;
+
+    let mut tmp_x = 10.;
     //let ferris = load_texture("tex2.png").await.unwrap();
 
     loop {
@@ -113,8 +115,58 @@ async fn main() {
                     draw_cube_wires(vec3(block_x, block_y, 0.), vec3(block_width, block_height, 0.5), WHITE);
 
                     if ball_y >= block_y - block_height / 2. - ball_radius && ball_y <= block_y + block_height / 2. + ball_radius && ball_x >= block_x - block_width / 2. - ball_radius && ball_x <= block_x + block_width / 2. + ball_radius {
-                        dy *= -1.;
-                        blocks[j][i] = false;
+                        let cx = ball_x - block_x;
+                        let cy = ball_y - block_y;
+                        if cx <= 0. && cy <= 0. {
+                            // left up quater
+                            if ball_x <= block_x - block_width / 2. {
+                                dx *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            } else {
+                                dy *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            }
+                        }
+                        if cx > 0. && cy < 0. {
+                            // right up quater
+                            if ball_x >= block_x + block_width / 2. {
+                                dx *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            } else {
+                                dy *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            }
+                        }
+                        if cx < 0. && cy > 0. {
+                            // left bottom quater
+                            if ball_x <= block_x - block_width / 2. {
+                                dx *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            } else {
+                                dy *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            }
+                        }
+                        if cx >= 0. && cy >= 0. {
+                            // right bottom quater
+                            if ball_x >= block_x + block_width /2. {
+                                dx *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            } else {
+                                dy *= -1.;
+                                blocks[j][i] = false;
+                                continue;
+                            }
+                        }
+                        //dy *= -1.;
+                        
                     }
                     //if ball_x >= block_x - block_width / 2. - ball_radius && ball_y >= block_y - block_height / 2. - ball_radius && ball_y <= block_y + block_height / 2. + ball_radius {
                     //    dx *= -1.;
@@ -146,7 +198,9 @@ async fn main() {
             ball_y += dy * delta;
         }
         // draw ball
+        tmp_x += 1.;
         draw_sphere_wires(vec3(ball_x, ball_y, 0.), ball_radius, None, WHITE);
+        //draw_sphere_wires(vec3(tmp_x, 100., 0.), ball_radius, None, WHITE);
         //draw pad
         draw_cube_wires(
             vec3(platform_x, screen_height() - platform_y_shift, 0.),
