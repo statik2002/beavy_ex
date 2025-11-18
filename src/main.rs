@@ -1,6 +1,15 @@
-use macroquad::prelude::*;
+use macroquad::{audio, prelude::*};
 
 const DEBUG: bool = true;
+
+#[derive(Copy, Clone)]
+struct Brick {
+    width: f32, // brick width
+    height: f32, // brick height
+    hit_count: i32, // num hits to destroy
+    //hit_sound: audio::Sound, // sound when ball hit to brick
+    visible: bool
+}
 
 fn window_conf() -> Conf {
     Conf {
@@ -18,6 +27,10 @@ fn draw_axes(start: Vec3) {
 
 #[macroquad::main(window_conf)]
 async fn main() {
+
+    let sound1 = audio::load_sound("knocking-wood.wav").await.unwrap();
+    let pad_sound = audio::load_sound("sound-hitting-metal.wav").await.unwrap();
+
     //block count
     const BLOCKS_W: usize = 10;
     const BLOCKS_H: usize = 5;
@@ -26,6 +39,7 @@ async fn main() {
 
     // bloks array
     let mut blocks: [[bool; BLOCKS_W]; BLOCKS_H] = [[true; BLOCKS_W]; BLOCKS_H];
+    let mut bricks: [[Brick; BLOCKS_W]; BLOCKS_H] = [[Brick{width: BLOCKS_W as f32, height: BLOCKS_H as f32, hit_count: 2, visible: true}; BLOCKS_W ]; BLOCKS_H];
 
     let mut platform_x = screen_width() / 2.;
     let mut platform_y_shift = 20.;
@@ -39,6 +53,7 @@ async fn main() {
     let mut dx = 200.0;
     let mut dy = 200.0;
     let mut stick = false;
+
 
     //let ferris = load_texture("tex2.png").await.unwrap();
 
@@ -61,7 +76,7 @@ async fn main() {
 
 
         set_camera(&Camera3D{
-            position: vec3(screen_width() / 2., screen_height() / 2. + 100., -1500.),
+            position: vec3(screen_width() / 2., screen_height() / 2., -1500.),
             up: vec3(0., -1., 0.),
             target: vec3(screen_width() / 2., screen_height() / 2., 0.),
             projection: Projection::Perspective,
@@ -72,6 +87,7 @@ async fn main() {
         //draw_grid(20, 1., BLACK, GRAY);
 
         // Draw blocks
+        /* 
         let block_width = screen_width() / BLOCKS_W as f32 - 20.;
         let block_height = screen_height() / BLOCKS_H as f32 / 5.;
         let shift: f32 = (BLOCKS_W as f32 * block_width - screen_width()) + 300.;
@@ -84,10 +100,28 @@ async fn main() {
                 }
             }
         }
+        */
+
+        let block_width = screen_width() / BLOCKS_W as f32 - 20.;
+        let block_height = screen_height() / BLOCKS_H as f32 / 5.;
+        let shift: f32 = (BLOCKS_W as f32 * block_width - screen_width()) + 300.;
+        for j in 0..BLOCKS_H{
+            for i in 0..BLOCKS_W {
+                if bricks[j][i].visible {
+                    let block_x = i as f32 * block_width + shift;
+                    let block_y = j as f32 * block_height + 50.;
+                    draw_cube_wires(vec3(block_x, block_y, 0.), vec3(block_width, block_height, 50.), WHITE);
+                    if DEBUG {
+                        draw_text(&format!("{}", bricks[j][i].hit_count), block_x + 10., block_y + 10., 30.0, WHITE);
+                    }
+                }
+            }
+        }
+
         // Calculate collisions
         'outer: for j in 0..BLOCKS_H{
             for i in 0..BLOCKS_W {
-                if blocks[j][i] {
+                if bricks[j][i].visible {
                     let block_x = i as f32 * block_width + shift;
                     let block_y = j as f32 * block_height + 50.;
 
@@ -98,11 +132,25 @@ async fn main() {
                             // left up quater
                             if ball_x <= block_x - block_width / 2. {
                                 dx *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             }
                         }
@@ -110,11 +158,25 @@ async fn main() {
                             // right up quater
                             if ball_x >= block_x + block_width / 2. {
                                 dx *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             }
                         }
@@ -122,11 +184,25 @@ async fn main() {
                             // left bottom quater
                             if ball_x <= block_x - block_width / 2. {
                                 dx *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             }
                         }
@@ -134,11 +210,25 @@ async fn main() {
                             // right bottom quater
                             if ball_x >= block_x + block_width /2. {
                                 dx *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                blocks[j][i] = false;
+                                if bricks[j][i].hit_count - 1 > 0 {
+                                    bricks[j][i].hit_count -= 1;
+                                }
+                                else {
+                                    bricks[j][i].visible = false;
+                                }
+                                //blocks[j][i] = false;
+                                audio::play_sound_once(&sound1);
                                 break 'outer;
                             }
                         }
@@ -154,14 +244,17 @@ async fn main() {
 
         // Claculate walls colisions
         if ball_x <= 0. + ball_radius + WALL_W / 2. || ball_x > screen_width() - ball_radius - WALL_W / 2. {
+            audio::play_sound_once(&sound1);
             dx *= -1.;
         }
         if ball_y >= screen_height() - platform_y_shift - platform_height / 2. - ball_radius  
             && ball_x >= platform_x - platform_width / 2. && ball_x <= platform_x + platform_width / 2. {
+            audio::play_sound_once(&pad_sound);
             dy *= -1.;
         }
         if ball_y >= screen_height() || ball_y < 0. + ball_radius + WALL_W / 2.{
             //ball_y = 10.;
+            audio::play_sound_once(&sound1);
             dy *= -1.;
             //stick = true;
         }
@@ -176,7 +269,7 @@ async fn main() {
         //draw pad
         draw_cube_wires(
             vec3(platform_x, screen_height() - platform_y_shift, 0.),
-            vec3(platform_width, platform_height, 0.),
+            vec3(platform_width, platform_height, 50.),
             WHITE
         );
 
