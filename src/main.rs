@@ -2,7 +2,7 @@ use macroquad::{audio, prelude::*};
 
 const DEBUG: bool = true;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct Brick {
     width: f32, // brick width
     height: f32, // brick height
@@ -16,6 +16,24 @@ fn window_conf() -> Conf {
         window_title: "First steps".to_owned(),
         fullscreen: true,
         ..Default::default()
+    }
+}
+
+fn draw_bricks(bricks: &Vec<Vec<Brick>>) {
+    //let block_width = screen_width() / BLOCKS_W as f32 - 20.;
+    //let block_height = screen_height() / BLOCKS_H as f32 / 5.;
+    for j in 0..bricks.len(){
+        for i in 0..bricks[j].len() {
+            if bricks[j][i].visible {
+                let shift: f32 = (i as f32 * bricks[j][i].width) + 300.;
+                let block_x = i as f32 * bricks[j][i].width + shift;
+                let block_y = j as f32 * bricks[j][i].height + 50.;
+                draw_cube_wires(vec3(block_x, block_y, 0.), vec3(bricks[j][i].width, bricks[j][i].height, 50.), WHITE);
+                if DEBUG {
+                    draw_text(&format!("{}", bricks[j][i].hit_count), block_x + 10., block_y + 10., 30.0, WHITE);
+                }
+            }
+        }
     }
 }
 
@@ -40,6 +58,17 @@ async fn main() {
     // bloks array
     let mut blocks: [[bool; BLOCKS_W]; BLOCKS_H] = [[true; BLOCKS_W]; BLOCKS_H];
     let mut bricks: [[Brick; BLOCKS_W]; BLOCKS_H] = [[Brick{width: BLOCKS_W as f32, height: BLOCKS_H as f32, hit_count: 2, visible: true}; BLOCKS_W ]; BLOCKS_H];
+    let mut bricks2: Vec<Vec<Brick>> = Vec::with_capacity(BLOCKS_H);
+    for row in 0..BLOCKS_H {
+        let mut row_vect: Vec<Brick> = Vec::with_capacity(BLOCKS_W);
+        for column in 0..BLOCKS_W {
+            let block_width = screen_width() / BLOCKS_W as f32;
+            let block_height = screen_height() / BLOCKS_H as f32;
+            row_vect.push(Brick { width: block_width, height: block_height, hit_count: 2, visible: true });
+        }
+        bricks2.push(row_vect);
+    }
+    println!("{:?}",  bricks2);
 
     let mut platform_x = screen_width() / 2.;
     let mut platform_y_shift = 20.;
@@ -87,6 +116,9 @@ async fn main() {
         //draw_grid(20, 1., BLACK, GRAY);
 
         // Draw blocks
+        let block_width = screen_width() / BLOCKS_W as f32 - 20.;
+        let block_height = screen_height() / BLOCKS_H as f32 / 5.;
+        let shift: f32 = (BLOCKS_W as f32 * block_width - screen_width()) + 300.;
         /* 
         let block_width = screen_width() / BLOCKS_W as f32 - 20.;
         let block_height = screen_height() / BLOCKS_H as f32 / 5.;
@@ -101,7 +133,7 @@ async fn main() {
             }
         }
         */
-
+        /* 
         let block_width = screen_width() / BLOCKS_W as f32 - 20.;
         let block_height = screen_height() / BLOCKS_H as f32 / 5.;
         let shift: f32 = (BLOCKS_W as f32 * block_width - screen_width()) + 300.;
@@ -117,6 +149,8 @@ async fn main() {
                 }
             }
         }
+        */
+        draw_bricks(&bricks2);
 
         // Calculate collisions
         'outer: for j in 0..BLOCKS_H{
@@ -287,7 +321,7 @@ async fn main() {
             draw_text("Y", 25.0,120.0, 20.0, BLUE);
             draw_text("Z", 40.0,120.0, 20.0, GREEN);
             draw_text(&format!("Screen width: {}, Screen height: {}", screen_width(), screen_height()), 10.0,150.0, 20.0, GREEN);
-            draw_text(&format!("Block shift: {}", shift), 10.0,170.0, 20.0, WHITE);
+            //draw_text(&format!("Block shift: {}", shift), 10.0,170.0, 20.0, WHITE);
         }
 
         next_frame().await
