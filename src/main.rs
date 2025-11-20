@@ -4,8 +4,12 @@ const DEBUG: bool = true;
 
 #[derive(Copy, Clone, Debug)]
 struct Brick {
+    x: f32, // x position
+    y: f32, // y position
+    z: f32, // z position
     width: f32, // brick width
     height: f32, // brick height
+    length: f32, // z length
     hit_count: i32, // num hits to destroy
     //hit_sound: audio::Sound, // sound when ball hit to brick
     visible: bool
@@ -25,12 +29,9 @@ fn draw_bricks(bricks: &Vec<Vec<Brick>>) {
     for j in 0..bricks.len(){
         for i in 0..bricks[j].len() {
             if bricks[j][i].visible {
-                let shift: f32 = (i as f32 * bricks[j][i].width) + 300.;
-                let block_x = i as f32 * bricks[j][i].width + shift;
-                let block_y = j as f32 * bricks[j][i].height + 50.;
-                draw_cube_wires(vec3(block_x, block_y, 0.), vec3(bricks[j][i].width, bricks[j][i].height, 50.), WHITE);
+                draw_cube_wires(vec3(bricks[j][i].x, bricks[j][i].y, bricks[j][i].z), vec3(bricks[j][i].width, bricks[j][i].height, bricks[j][i].length), WHITE);
                 if DEBUG {
-                    draw_text(&format!("{}", bricks[j][i].hit_count), block_x + 10., block_y + 10., 30.0, WHITE);
+                    draw_text(&format!("{}", bricks[j][i].hit_count), bricks[j][i].x, bricks[j][i].y, 30.0, WHITE);
                 }
             }
         }
@@ -57,18 +58,21 @@ async fn main() {
 
     // bloks array
     let mut blocks: [[bool; BLOCKS_W]; BLOCKS_H] = [[true; BLOCKS_W]; BLOCKS_H];
-    let mut bricks: [[Brick; BLOCKS_W]; BLOCKS_H] = [[Brick{width: BLOCKS_W as f32, height: BLOCKS_H as f32, hit_count: 2, visible: true}; BLOCKS_W ]; BLOCKS_H];
+    //let mut bricks: [[Brick; BLOCKS_W]; BLOCKS_H] = [[Brick{width: BLOCKS_W as f32, height: BLOCKS_H as f32, hit_count: 2, visible: true}; BLOCKS_W ]; BLOCKS_H];
     let mut bricks2: Vec<Vec<Brick>> = Vec::with_capacity(BLOCKS_H);
+    let brick_width = screen_width() * 2. / BLOCKS_W as f32;
+    let brick_height = brick_width / 3.;
     for row in 0..BLOCKS_H {
         let mut row_vect: Vec<Brick> = Vec::with_capacity(BLOCKS_W);
         for column in 0..BLOCKS_W {
-            let block_width = screen_width() / BLOCKS_W as f32;
-            let block_height = screen_height() / BLOCKS_H as f32;
-            row_vect.push(Brick { width: block_width, height: block_height, hit_count: 2, visible: true });
+            let shift: f32 = brick_width;
+            let block_x = (column + 1) as f32 * brick_width + brick_width / 2.;
+            let block_y = (row + 1) as f32 * brick_height + brick_height;
+            row_vect.push(Brick { x: block_x, y: block_y, z: 0., width: brick_width, height: brick_height, length: 50., hit_count: 2, visible: true });
         }
         bricks2.push(row_vect);
     }
-    println!("{:?}",  bricks2);
+    //println!("{:?}",  bricks2);
 
     let mut platform_x = screen_width() / 2.;
     let mut platform_y_shift = 20.;
@@ -116,9 +120,9 @@ async fn main() {
         //draw_grid(20, 1., BLACK, GRAY);
 
         // Draw blocks
-        let block_width = screen_width() / BLOCKS_W as f32 - 20.;
-        let block_height = screen_height() / BLOCKS_H as f32 / 5.;
-        let shift: f32 = (BLOCKS_W as f32 * block_width - screen_width()) + 300.;
+        //let block_width = screen_width() / BLOCKS_W as f32 - 20.;
+        //let block_height = screen_height() / BLOCKS_H as f32 / 5.;
+        //let shift: f32 = (BLOCKS_W as f32 * block_width - screen_width()) + 300.;
         /* 
         let block_width = screen_width() / BLOCKS_W as f32 - 20.;
         let block_height = screen_height() / BLOCKS_H as f32 / 5.;
@@ -150,14 +154,19 @@ async fn main() {
             }
         }
         */
+        draw_cube_wires(vec3(0., 0., 0.), vec3(50., 50., 50.), RED);
+        draw_cube_wires(vec3(screen_width(), 0., 0.), vec3(50., 50., 50.), RED);
+
         draw_bricks(&bricks2);
 
         // Calculate collisions
         'outer: for j in 0..BLOCKS_H{
             for i in 0..BLOCKS_W {
-                if bricks[j][i].visible {
-                    let block_x = i as f32 * block_width + shift;
-                    let block_y = j as f32 * block_height + 50.;
+                if bricks2[j][i].visible {
+                    let block_x = bricks2[j][i].x;
+                    let block_y = bricks2[j][i].y;
+                    let block_width = bricks2[j][i].width;
+                    let block_height = bricks2[j][i].height;
 
                     if ball_y >= block_y - block_height / 2. - ball_radius && ball_y <= block_y + block_height / 2. + ball_radius && ball_x >= block_x - block_width / 2. - ball_radius && ball_x <= block_x + block_width / 2. + ball_radius {
                         let cx = ball_x - block_x;
@@ -166,22 +175,22 @@ async fn main() {
                             // left up quater
                             if ball_x <= block_x - block_width / 2. {
                                 dx *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
@@ -192,22 +201,22 @@ async fn main() {
                             // right up quater
                             if ball_x >= block_x + block_width / 2. {
                                 dx *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
@@ -218,22 +227,22 @@ async fn main() {
                             // left bottom quater
                             if ball_x <= block_x - block_width / 2. {
                                 dx *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
@@ -244,22 +253,22 @@ async fn main() {
                             // right bottom quater
                             if ball_x >= block_x + block_width /2. {
                                 dx *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
                                 break 'outer;
                             } else {
                                 dy *= -1.;
-                                if bricks[j][i].hit_count - 1 > 0 {
-                                    bricks[j][i].hit_count -= 1;
+                                if bricks2[j][i].hit_count - 1 > 0 {
+                                    bricks2[j][i].hit_count -= 1;
                                 }
                                 else {
-                                    bricks[j][i].visible = false;
+                                    bricks2[j][i].visible = false;
                                 }
                                 //blocks[j][i] = false;
                                 audio::play_sound_once(&sound1);
